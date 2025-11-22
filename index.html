@@ -79,10 +79,12 @@
         .search-container {
             position: relative;
             width: 300px;
+            display: flex;
+            gap: 5px;
         }
 
         .search-input {
-            width: 100%;
+            flex: 1;
             padding: 10px 15px 10px 40px;
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
@@ -366,7 +368,18 @@
         .weather-temp {
             font-size: 24px;
             font-weight: 700;
-            color: var(--primary-color);
+        }
+
+        .temp-good {
+            color: var(--secondary-color);
+        }
+
+        .temp-moderate {
+            color: var(--warning-color);
+        }
+
+        .temp-bad {
+            color: var(--danger-color);
         }
 
         .weather-details {
@@ -436,6 +449,66 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
+        /* Device Selection Modal */
+        .device-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .device-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--box-shadow);
+        }
+
+        .device-modal h2 {
+            margin-bottom: 20px;
+            color: var(--dark-color);
+        }
+
+        .device-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .device-option {
+            flex: 1;
+            padding: 20px 10px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .device-option:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+        }
+
+        .device-option.active {
+            border-color: var(--primary-color);
+            background: rgba(26, 115, 232, 0.1);
+        }
+
+        .device-option i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header {
@@ -473,6 +546,10 @@
 
             .mobile-menu {
                 display: flex;
+            }
+
+            .device-options {
+                flex-direction: column;
             }
         }
 
@@ -564,9 +641,45 @@
             color: var(--dark-color);
             font-size: 18px;
         }
+
+        /* Back Button */
+        .back-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            color: #0d62d9;
+        }
     </style>
 </head>
 <body>
+    <!-- Device Selection Modal -->
+    <div class="device-modal" id="deviceModal">
+        <div class="device-modal-content">
+            <h2>Apakah peranti anda guna sekarang?</h2>
+            <div class="device-options">
+                <div class="device-option" data-device="smartphone">
+                    <i class="fas fa-mobile-alt"></i>
+                    <div>Smartphone Device</div>
+                </div>
+                <div class="device-option" data-device="desktop">
+                    <i class="fas fa-desktop"></i>
+                    <div>Desktop Computer</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="confirmDeviceBtn">Teruskan</button>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Header -->
         <div class="header">
@@ -577,7 +690,10 @@
             
             <div class="search-container">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" id="searchInput" placeholder="Cari bandar atau alamat...">
+                <input type="text" class="search-input" id="searchInput" placeholder="Cari bandar, alamat atau koordinat...">
+                <button class="btn btn-primary" id="searchBtn">
+                    <i class="fas fa-search"></i> Cari Ramalan
+                </button>
             </div>
             
             <div class="controls">
@@ -619,6 +735,11 @@
             </button>
             
             <div class="side-panel" id="sidePanel">
+                <!-- Back Button for Settings -->
+                <button class="back-btn" id="backBtn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </button>
+
                 <!-- Mode Toggle -->
                 <div class="mode-toggle">
                     <div class="mode-option active" data-mode="desktop">
@@ -630,13 +751,13 @@
                 </div>
 
                 <!-- Favorites Panel -->
-                <div class="panel-section">
+                <div class="panel-section" id="favoritesPanel">
                     <h3><i class="fas fa-star"></i> Lokasi Favorite</h3>
                     <ul class="favorites-list" id="favoriteList"></ul>
                 </div>
 
                 <!-- Settings Panel -->
-                <div class="panel-section" id="settingsPanel">
+                <div class="panel-section" id="settingsPanel" style="display: none;">
                     <h3><i class="fas fa-cog"></i> Settings</h3>
                     
                     <div class="settings-option">
@@ -683,6 +804,7 @@
         let updateIntervalTime = 5000; // 5 seconds default
         let isFullscreen = false;
         let currentMode = 'desktop';
+        let selectedDevice = null;
 
         // DOM Elements
         const mapContainer = document.getElementById('mapContainer');
@@ -690,6 +812,7 @@
         const panelToggle = document.getElementById('panelToggle');
         const favoriteList = document.getElementById('favoriteList');
         const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
         const gpsBtn = document.getElementById('gpsBtn');
         const settingsBtn = document.getElementById('settingsBtn');
         const menuBtn = document.getElementById('menuBtn');
@@ -703,9 +826,28 @@
         const importFileInput = document.getElementById('importFileInput');
         const toast = document.getElementById('toast');
         const modeOptions = document.querySelectorAll('.mode-option');
+        const deviceModal = document.getElementById('deviceModal');
+        const deviceOptions = document.querySelectorAll('.device-option');
+        const confirmDeviceBtn = document.getElementById('confirmDeviceBtn');
+        const backBtn = document.getElementById('backBtn');
+        const favoritesPanel = document.getElementById('favoritesPanel');
+        const settingsPanel = document.getElementById('settingsPanel');
 
         // Initialize the application
         function init() {
+            // Check if device is already selected
+            const savedDevice = localStorage.getItem('selectedDevice');
+            if (savedDevice) {
+                selectedDevice = savedDevice;
+                deviceModal.style.display = 'none';
+                initializeApp();
+            } else {
+                deviceModal.style.display = 'flex';
+            }
+        }
+
+        // Initialize app after device selection
+        function initializeApp() {
             initializeMap();
             setupEventListeners();
             updateFavoritePanel();
@@ -742,6 +884,25 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            // Device selection
+            deviceOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    deviceOptions.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    selectedDevice = option.dataset.device;
+                });
+            });
+            
+            confirmDeviceBtn.addEventListener('click', () => {
+                if (selectedDevice) {
+                    localStorage.setItem('selectedDevice', selectedDevice);
+                    deviceModal.style.display = 'none';
+                    initializeApp();
+                } else {
+                    showToast("Sila pilih jenis peranti anda", "warning");
+                }
+            });
+            
             // Panel toggle
             panelToggle.addEventListener('click', toggleSidePanel);
             
@@ -755,16 +916,21 @@
                 }
             });
             
+            searchBtn.addEventListener('click', searchLocation);
+            
             // Map controls
             zoomInBtn.addEventListener('click', () => map.zoomIn());
             zoomOutBtn.addEventListener('click', () => map.zoomOut());
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             
             // Settings
-            settingsBtn.addEventListener('click', toggleSettings);
+            settingsBtn.addEventListener('click', showSettings);
             menuBtn.addEventListener('click', toggleMobileMenu);
             updateIntervalSelect.addEventListener('change', updateSettings);
             tempUnitSelect.addEventListener('change', updateSettings);
+            
+            // Back button
+            backBtn.addEventListener('click', showFavorites);
             
             // Data management
             exportDataBtn.addEventListener('click', exportData);
@@ -793,6 +959,20 @@
         // Toggle mobile menu
         function toggleMobileMenu() {
             sidePanel.classList.toggle('active');
+        }
+
+        // Show settings panel
+        function showSettings() {
+            favoritesPanel.style.display = 'none';
+            settingsPanel.style.display = 'block';
+            backBtn.style.display = 'block';
+        }
+
+        // Show favorites panel
+        function showFavorites() {
+            settingsPanel.style.display = 'none';
+            favoritesPanel.style.display = 'block';
+            backBtn.style.display = 'none';
         }
 
         // Toggle fullscreen mode
@@ -894,7 +1074,24 @@
         // Search for a location
         function searchLocation() {
             const query = searchInput.value.trim();
-            if (!query) return;
+            if (!query) {
+                showToast("Sila masukkan lokasi untuk dicari", "warning");
+                return;
+            }
+            
+            // Check if query is coordinates
+            const coordMatch = query.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
+            if (coordMatch) {
+                const lat = parseFloat(coordMatch[1]);
+                const lon = parseFloat(coordMatch[2]);
+                
+                if (isValidCoordinate(lat, lon)) {
+                    addWeatherPin(lat, lon, `Koordinat: ${lat}, ${lon}`);
+                    map.setView([lat, lon], 12);
+                    showToast(`Koordinat ditemui: ${lat}, ${lon}`, "success");
+                    return;
+                }
+            }
             
             // Use OpenStreetMap Nominatim for geocoding
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
@@ -913,6 +1110,11 @@
                     console.error("Search error: ", error);
                     showToast("Ralat ketika mencari lokasi", "error");
                 });
+        }
+
+        // Validate coordinates
+        function isValidCoordinate(lat, lon) {
+            return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
         }
 
         // Add weather pin to map
@@ -981,6 +1183,14 @@
             return 'https://cdn-icons-png.flaticon.com/512/1146/1146869.png'; // Default
         }
 
+        // Get temperature class based on value
+        function getTempClass(temp) {
+            if (temp <= 15) return 'temp-bad'; // Too cold
+            if (temp <= 25) return 'temp-good'; // Comfortable
+            if (temp <= 35) return 'temp-moderate'; // Warm
+            return 'temp-bad'; // Too hot
+        }
+
         // Create popup content for weather marker
         function createPopupContent(name, lat, lon, data) {
             const current = data.current_weather;
@@ -990,6 +1200,7 @@
                 : current.temperature;
             
             const tempSymbol = tempUnit === 'fahrenheit' ? '°F' : '°C';
+            const tempClass = getTempClass(current.temperature);
             
             // Create hourly table
             let hourlyTable = '<table class="weather-table"><tr><th>Jam</th><th>Suhu</th><th>Hujan</th><th>Angin</th></tr>';
@@ -1032,7 +1243,7 @@
                 <div class="weather-popup">
                     <div class="weather-header">
                         <div class="weather-title">${name}</div>
-                        <div class="weather-temp">${temperature}${tempSymbol}</div>
+                        <div class="weather-temp ${tempClass}">${temperature}${tempSymbol}</div>
                     </div>
                     
                     <div class="weather-details">
@@ -1052,6 +1263,11 @@
                             <i class="fas fa-cloud"></i>
                             <span>${current.weathercode}</span>
                         </div>
+                    </div>
+                    
+                    <div class="weather-detail">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Koordinat: ${lat.toFixed(4)}, ${lon.toFixed(4)}</span>
                     </div>
                     
                     <h4>Ramalan 12 Jam</h4>
@@ -1178,12 +1394,6 @@
                 `;
                 favoriteList.appendChild(li);
             });
-        }
-
-        // Toggle settings panel
-        function toggleSettings() {
-            const settingsPanel = document.getElementById('settingsPanel');
-            settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
         }
 
         // Update settings
