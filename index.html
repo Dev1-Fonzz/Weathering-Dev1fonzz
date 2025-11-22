@@ -659,24 +659,85 @@
         .back-btn:hover {
             color: #0d62d9;
         }
+
+        /* Weather Status Indicators */
+        .weather-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: var(--border-radius);
+            background: #f8f9fa;
+        }
+
+        .status-good {
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .status-moderate {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .status-bad {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Current Location Info */
+        .current-location {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* Weather Legend */
+        .weather-legend {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
     <!-- Device Selection Modal -->
     <div class="device-modal" id="deviceModal">
         <div class="device-modal-content">
-            <h2>Apakah peranti anda guna sekarang?</h2>
+            <h2>🌍 Pilih Jenis Peranti Anda</h2>
+            <p style="margin-bottom: 20px; color: #666;">Pilih jenis peranti untuk pengalaman yang lebih baik</p>
             <div class="device-options">
                 <div class="device-option" data-device="smartphone">
                     <i class="fas fa-mobile-alt"></i>
-                    <div>Smartphone Device</div>
+                    <div>📱 Smartphone</div>
+                    <small>Optimized untuk peranti mudah alih</small>
                 </div>
                 <div class="device-option" data-device="desktop">
                     <i class="fas fa-desktop"></i>
-                    <div>Desktop Computer</div>
+                    <div>💻 Desktop</div>
+                    <small>Pengalaman penuh dengan lebih banyak ciri</small>
                 </div>
             </div>
-            <button class="btn btn-primary" id="confirmDeviceBtn">Teruskan</button>
+            <button class="btn btn-primary" id="confirmDeviceBtn" style="margin-top: 15px;">
+                <i class="fas fa-play"></i> Mula Gunakan Aplikasi
+            </button>
         </div>
     </div>
 
@@ -684,7 +745,7 @@
         <!-- Header -->
         <div class="header">
             <div class="logo">
-                <i class="fas fa-cloud-sun"></i>
+                <i class="fas fa-cloud-sun-rain"></i>
                 <h1>Peta Cuaca Real-Time</h1>
             </div>
             
@@ -692,12 +753,12 @@
                 <i class="fas fa-search search-icon"></i>
                 <input type="text" class="search-input" id="searchInput" placeholder="Cari bandar, alamat atau koordinat...">
                 <button class="btn btn-primary" id="searchBtn">
-                    <i class="fas fa-search"></i> Cari Ramalan
+                    <i class="fas fa-search-location"></i> Cari Ramalan
                 </button>
             </div>
             
             <div class="controls">
-                <button class="btn btn-primary" id="gpsBtn">
+                <button class="btn btn-success" id="gpsBtn">
                     <i class="fas fa-location-arrow"></i> GPS Saya
                 </button>
                 <button class="btn btn-outline" id="settingsBtn">
@@ -726,6 +787,25 @@
                     <button class="control-btn" id="fullscreenBtn" title="Fullscreen">
                         <i class="fas fa-expand"></i>
                     </button>
+                    <button class="control-btn" id="locateBtn" title="Cari Lokasi Saya">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                </div>
+
+                <!-- Weather Legend -->
+                <div class="weather-legend" style="position: absolute; bottom: 20px; left: 20px; background: rgba(255,255,255,0.9);">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--secondary-color);"></div>
+                        <span>Cuaca Baik</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--warning-color);"></div>
+                        <span>Cuaca Sederhana</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--danger-color);"></div>
+                        <span>Cuaca Teruk</span>
+                    </div>
                 </div>
             </div>
 
@@ -737,8 +817,14 @@
             <div class="side-panel" id="sidePanel">
                 <!-- Back Button for Settings -->
                 <button class="back-btn" id="backBtn" style="display: none;">
-                    <i class="fas fa-arrow-left"></i> Kembali
+                    <i class="fas fa-arrow-left"></i> Kembali ke Senarai
                 </button>
+
+                <!-- Current Location Info -->
+                <div class="current-location" id="currentLocationInfo" style="display: none;">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="currentLocationText">Lokasi Semasa</span>
+                </div>
 
                 <!-- Mode Toggle -->
                 <div class="mode-toggle">
@@ -750,18 +836,35 @@
                     </div>
                 </div>
 
+                <!-- Quick Actions -->
+                <div class="panel-section">
+                    <h3><i class="fas fa-bolt"></i> Tindakan Pantas</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="btn btn-outline" id="refreshWeatherBtn">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn btn-outline" id="clearMarkersBtn">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Favorites Panel -->
                 <div class="panel-section" id="favoritesPanel">
                     <h3><i class="fas fa-star"></i> Lokasi Favorite</h3>
+                    <div class="weather-status status-good">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Klik pada peta untuk menambah lokasi favorite</span>
+                    </div>
                     <ul class="favorites-list" id="favoriteList"></ul>
                 </div>
 
                 <!-- Settings Panel -->
                 <div class="panel-section" id="settingsPanel" style="display: none;">
-                    <h3><i class="fas fa-cog"></i> Settings</h3>
+                    <h3><i class="fas fa-cog"></i> Tetapan Aplikasi</h3>
                     
                     <div class="settings-option">
-                        <label for="updateInterval">Selang Kemaskini (saat)</label>
+                        <label for="updateInterval"><i class="fas fa-clock"></i> Selang Kemaskini</label>
                         <select id="updateInterval">
                             <option value="5">5 saat</option>
                             <option value="10">10 saat</option>
@@ -772,10 +875,19 @@
                     </div>
                     
                     <div class="settings-option">
-                        <label for="tempUnit">Unit Suhu</label>
+                        <label for="tempUnit"><i class="fas fa-thermometer-half"></i> Unit Suhu</label>
                         <select id="tempUnit">
                             <option value="celsius">Celsius (°C)</option>
                             <option value="fahrenheit">Fahrenheit (°F)</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-option">
+                        <label for="mapStyle"><i class="fas fa-map"></i> Gaya Peta</label>
+                        <select id="mapStyle">
+                            <option value="standard">Standard</option>
+                            <option value="satellite">Satelit</option>
+                            <option value="terrain">Terrain</option>
                         </select>
                     </div>
                     
@@ -788,6 +900,12 @@
                         </button>
                         <input type="file" id="importFileInput" style="display: none;" accept=".json">
                     </div>
+
+                    <div class="settings-actions">
+                        <button class="btn btn-warning" id="resetSettingsBtn">
+                            <i class="fas fa-redo"></i> Reset Tetapan
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -799,12 +917,13 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // Initialize variables
-        let map, currentMarker, updateInterval;
+        let map, currentMarker, updateInterval, currentLocationCircle;
         let favoriteLocations = JSON.parse(localStorage.getItem('favoriteLocations')) || [];
         let updateIntervalTime = 5000; // 5 seconds default
         let isFullscreen = false;
         let currentMode = 'desktop';
         let selectedDevice = null;
+        let currentTileLayer = null;
 
         // DOM Elements
         const mapContainer = document.getElementById('mapContainer');
@@ -819,11 +938,16 @@
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const locateBtn = document.getElementById('locateBtn');
         const updateIntervalSelect = document.getElementById('updateInterval');
         const tempUnitSelect = document.getElementById('tempUnit');
+        const mapStyleSelect = document.getElementById('mapStyle');
         const exportDataBtn = document.getElementById('exportDataBtn');
         const importDataBtn = document.getElementById('importDataBtn');
         const importFileInput = document.getElementById('importFileInput');
+        const refreshWeatherBtn = document.getElementById('refreshWeatherBtn');
+        const clearMarkersBtn = document.getElementById('clearMarkersBtn');
+        const resetSettingsBtn = document.getElementById('resetSettingsBtn');
         const toast = document.getElementById('toast');
         const modeOptions = document.querySelectorAll('.mode-option');
         const deviceModal = document.getElementById('deviceModal');
@@ -832,6 +956,8 @@
         const backBtn = document.getElementById('backBtn');
         const favoritesPanel = document.getElementById('favoritesPanel');
         const settingsPanel = document.getElementById('settingsPanel');
+        const currentLocationInfo = document.getElementById('currentLocationInfo');
+        const currentLocationText = document.getElementById('currentLocationText');
 
         // Initialize the application
         function init() {
@@ -843,6 +969,15 @@
                 initializeApp();
             } else {
                 deviceModal.style.display = 'flex';
+                // Auto-select based on screen size
+                const isMobile = window.innerWidth <= 768;
+                const autoSelectDevice = isMobile ? 'smartphone' : 'desktop';
+                deviceOptions.forEach(option => {
+                    if (option.dataset.device === autoSelectDevice) {
+                        option.classList.add('active');
+                        selectedDevice = autoSelectDevice;
+                    }
+                });
             }
         }
 
@@ -853,53 +988,72 @@
             updateFavoritePanel();
             loadSettings();
             
-            // Try to get user location on startup
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const { latitude, longitude } = position.coords;
-                        addWeatherPin(latitude, longitude, "Lokasi Anda");
-                        map.setView([latitude, longitude], 12);
-                    },
-                    error => {
-                        console.log("GPS error: ", error);
-                        showToast("Gagal mendapatkan lokasi GPS", "error");
-                    }
-                );
-            }
+            // Show welcome message
+            showToast(`Selamat datang! Aplikasi cuaca sedia digunakan dalam mod ${selectedDevice === 'smartphone' ? 'mobile' : 'desktop'}`, 'success');
         }
 
         // Initialize the map
         function initializeMap() {
             map = L.map('map').setView([4.2105, 101.9758], 6);
             
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
+            // Set initial tile layer
+            updateTileLayer('standard');
             
             // Add scale control
             L.control.scale({imperial: false}).addTo(map);
+
+            // Add click event to map
+            map.on('click', function(e) {
+                const { lat, lng } = e.latlng;
+                addWeatherPin(lat, lng, `Lokasi Terpilih: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+            });
+        }
+
+        // Update tile layer based on selection
+        function updateTileLayer(style) {
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+            }
+
+            let tileUrl, attribution;
+            switch(style) {
+                case 'satellite':
+                    tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+                    attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+                    break;
+                case 'terrain':
+                    tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+                    attribution = 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>';
+                    break;
+                default:
+                    tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                    attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+            }
+
+            currentTileLayer = L.tileLayer(tileUrl, {
+                maxZoom: 19,
+                attribution: attribution
+            }).addTo(map);
         }
 
         // Setup event listeners
         function setupEventListeners() {
-            // Device selection
+            // Device selection - FIXED: Added proper event listeners
             deviceOptions.forEach(option => {
-                option.addEventListener('click', () => {
+                option.addEventListener('click', function() {
                     deviceOptions.forEach(opt => opt.classList.remove('active'));
-                    option.classList.add('active');
-                    selectedDevice = option.dataset.device;
+                    this.classList.add('active');
+                    selectedDevice = this.dataset.device;
                 });
             });
             
-            confirmDeviceBtn.addEventListener('click', () => {
+            confirmDeviceBtn.addEventListener('click', function() {
                 if (selectedDevice) {
                     localStorage.setItem('selectedDevice', selectedDevice);
                     deviceModal.style.display = 'none';
                     initializeApp();
                 } else {
-                    showToast("Sila pilih jenis peranti anda", "warning");
+                    showToast("Sila pilih jenis peranti anda terlebih dahulu", "warning");
                 }
             });
             
@@ -908,6 +1062,7 @@
             
             // GPS button
             gpsBtn.addEventListener('click', getCurrentLocation);
+            locateBtn.addEventListener('click', getCurrentLocation);
             
             // Search functionality
             searchInput.addEventListener('keypress', (e) => {
@@ -928,6 +1083,10 @@
             menuBtn.addEventListener('click', toggleMobileMenu);
             updateIntervalSelect.addEventListener('change', updateSettings);
             tempUnitSelect.addEventListener('change', updateSettings);
+            mapStyleSelect.addEventListener('change', function() {
+                updateTileLayer(this.value);
+                updateSettings();
+            });
             
             // Back button
             backBtn.addEventListener('click', showFavorites);
@@ -936,6 +1095,11 @@
             exportDataBtn.addEventListener('click', exportData);
             importDataBtn.addEventListener('click', () => importFileInput.click());
             importFileInput.addEventListener('change', importData);
+            
+            // Quick actions
+            refreshWeatherBtn.addEventListener('click', refreshAllWeatherData);
+            clearMarkersBtn.addEventListener('click', clearAllMarkers);
+            resetSettingsBtn.addEventListener('click', resetSettings);
             
             // Mode toggle
             modeOptions.forEach(option => {
@@ -1041,6 +1205,7 @@
             
             // Save mode preference
             localStorage.setItem('preferredMode', mode);
+            showToast(`Tukar ke mod ${mode}`, "success");
         }
 
         // Get current location
@@ -1052,8 +1217,25 @@
                 navigator.geolocation.getCurrentPosition(
                     position => {
                         const { latitude, longitude } = position.coords;
-                        addWeatherPin(latitude, longitude, "Lokasi Anda");
-                        map.setView([latitude, longitude], 12);
+                        
+                        // Add or update current location marker
+                        if (currentLocationCircle) {
+                            map.removeLayer(currentLocationCircle);
+                        }
+                        
+                        currentLocationCircle = L.circle([latitude, longitude], {
+                            color: 'blue',
+                            fillColor: '#1a73e8',
+                            fillOpacity: 0.2,
+                            radius: 100
+                        }).addTo(map);
+                        
+                        addWeatherPin(latitude, longitude, "Lokasi Anda Sekarang");
+                        map.setView([latitude, longitude], 13);
+                        
+                        // Update current location info
+                        currentLocationInfo.style.display = 'block';
+                        currentLocationText.textContent = `Anda berada di sini (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
                         
                         gpsBtn.innerHTML = '<i class="fas fa-location-arrow"></i> GPS Saya';
                         gpsBtn.disabled = false;
@@ -1063,7 +1245,7 @@
                         console.error("GPS error: ", error);
                         gpsBtn.innerHTML = '<i class="fas fa-location-arrow"></i> GPS Saya';
                         gpsBtn.disabled = false;
-                        showToast("Gagal mendapatkan lokasi GPS", "error");
+                        showToast("Gagal mendapatkan lokasi GPS. Pastikan GPS diaktifkan.", "error");
                     }
                 );
             } else {
@@ -1175,7 +1357,6 @@
         // Get weather icon URL based on weather code
         function getWeatherIconUrl(weatherCode) {
             // Simple mapping of weather codes to icons
-            // In a real app, you would use a proper weather icon set
             if (weatherCode === 0) return 'https://cdn-icons-png.flaticon.com/512/6974/6974833.png'; // Clear
             if (weatherCode <= 3) return 'https://cdn-icons-png.flaticon.com/512/414/414927.png'; // Cloudy
             if (weatherCode <= 67) return 'https://cdn-icons-png.flaticon.com/512/3351/3351979.png'; // Rain
@@ -1191,6 +1372,14 @@
             return 'temp-bad'; // Too hot
         }
 
+        // Get weather status based on weather code
+        function getWeatherStatus(weatherCode) {
+            if ([0, 1].includes(weatherCode)) return 'status-good';
+            if ([2, 3, 45, 48].includes(weatherCode)) return 'status-moderate';
+            if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(weatherCode)) return 'status-bad';
+            return 'status-moderate';
+        }
+
         // Create popup content for weather marker
         function createPopupContent(name, lat, lon, data) {
             const current = data.current_weather;
@@ -1201,6 +1390,7 @@
             
             const tempSymbol = tempUnit === 'fahrenheit' ? '°F' : '°C';
             const tempClass = getTempClass(current.temperature);
+            const weatherStatus = getWeatherStatus(current.weathercode);
             
             // Create hourly table
             let hourlyTable = '<table class="weather-table"><tr><th>Jam</th><th>Suhu</th><th>Hujan</th><th>Angin</th></tr>';
@@ -1234,7 +1424,7 @@
                     <td>${days[new Date(data.daily.time[i]).getDay()]}</td>
                     <td>${dayMax}${tempSymbol}</td>
                     <td>${dayMin}${tempSymbol}</td>
-                    <td>${data.daily.weathercode[i]}</td>
+                    <td>${getWeatherDescription(data.daily.weathercode[i])}</td>
                 </tr>`;
             }
             dailyTable += '</table>';
@@ -1244,6 +1434,11 @@
                     <div class="weather-header">
                         <div class="weather-title">${name}</div>
                         <div class="weather-temp ${tempClass}">${temperature}${tempSymbol}</div>
+                    </div>
+                    
+                    <div class="weather-status ${weatherStatus}">
+                        <i class="fas fa-info-circle"></i>
+                        <span>${getWeatherDescription(current.weathercode)}</span>
                     </div>
                     
                     <div class="weather-details">
@@ -1261,7 +1456,7 @@
                         </div>
                         <div class="weather-detail">
                             <i class="fas fa-cloud"></i>
-                            <span>${current.weathercode}</span>
+                            <span>${getWeatherDescription(current.weathercode)}</span>
                         </div>
                     </div>
                     
@@ -1290,6 +1485,41 @@
                     </p>
                 </div>
             `;
+        }
+
+        // Get weather description from weather code
+        function getWeatherDescription(weatherCode) {
+            const descriptions = {
+                0: 'Cerah',
+                1: 'Kebanyakan cerah',
+                2: 'Separa berawan',
+                3: 'Berawan',
+                45: 'Kabus',
+                48: 'Kabus beku',
+                51: 'Drizzle ringan',
+                53: 'Drizzle sederhana',
+                55: 'Drizzle padat',
+                56: 'Drizzle beku ringan',
+                57: 'Drizzle beku padat',
+                61: 'Hujan ringan',
+                63: 'Hujan sederhana',
+                65: 'Hujan lebat',
+                66: 'Hujan beku ringan',
+                67: 'Hujan beku lebat',
+                71: 'Salji ringan',
+                73: 'Salji sederhana',
+                75: 'Salji lebat',
+                77: 'Butiran salji',
+                80: 'Hujan renyai ringan',
+                81: 'Hujan renyai sederhana',
+                82: 'Hujan renyai lebat',
+                85: 'Salji renyai ringan',
+                86: 'Salji renyai lebat',
+                95: 'Ribut petir',
+                96: 'Ribut petir dengan hujan batu ringan',
+                99: 'Ribut petir dengan hujan batu lebat'
+            };
+            return descriptions[weatherCode] || 'Tidak diketahui';
         }
 
         // Add weather zone circle to map
@@ -1334,6 +1564,31 @@
                     console.error("Error updating weather data: ", error);
                 }
             }, updateIntervalTime);
+        }
+
+        // Refresh all weather data
+        function refreshAllWeatherData() {
+            if (currentMarker) {
+                const latlng = currentMarker.getLatLng();
+                addWeatherPin(latlng.lat, latlng.lng, "Lokasi Terkini");
+                showToast("Data cuaca dikemaskini", "success");
+            } else {
+                showToast("Tiada lokasi aktif untuk dikemaskini", "warning");
+            }
+        }
+
+        // Clear all markers
+        function clearAllMarkers() {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+                currentMarker = null;
+            }
+            if (currentLocationCircle) {
+                map.removeLayer(currentLocationCircle);
+                currentLocationCircle = null;
+            }
+            currentLocationInfo.style.display = 'none';
+            showToast("Semua penanda telah dibersihkan", "success");
         }
 
         // Add location to favorites
@@ -1403,11 +1658,12 @@
             // Save settings to localStorage
             const settings = {
                 updateInterval: updateIntervalSelect.value,
-                tempUnit: tempUnitSelect.value
+                tempUnit: tempUnitSelect.value,
+                mapStyle: mapStyleSelect.value
             };
             localStorage.setItem('weatherAppSettings', JSON.stringify(settings));
             
-            showToast("Settings berjaya dikemaskini", "success");
+            showToast("Tetapan berjaya dikemaskini", "success");
         }
 
         // Load settings from localStorage
@@ -1419,11 +1675,34 @@
                 const settings = JSON.parse(savedSettings);
                 updateIntervalSelect.value = settings.updateInterval || '5';
                 tempUnitSelect.value = settings.tempUnit || 'celsius';
+                mapStyleSelect.value = settings.mapStyle || 'standard';
                 updateIntervalTime = parseInt(updateIntervalSelect.value) * 1000;
             }
             
             if (savedMode) {
                 switchMode(savedMode);
+            }
+        }
+
+        // Reset settings to default
+        function resetSettings() {
+            if (confirm("Adakah anda pasti ingin menetapkan semula semua tetapan kepada nilai asal?")) {
+                localStorage.removeItem('weatherAppSettings');
+                localStorage.removeItem('favoriteLocations');
+                localStorage.removeItem('preferredMode');
+                localStorage.removeItem('selectedDevice');
+                
+                updateIntervalSelect.value = '5';
+                tempUnitSelect.value = 'celsius';
+                mapStyleSelect.value = 'standard';
+                updateIntervalTime = 5000;
+                favoriteLocations = [];
+                
+                updateFavoritePanel();
+                updateTileLayer('standard');
+                clearAllMarkers();
+                
+                showToast("Semua tetapan telah ditetapkan semula", "success");
             }
         }
 
@@ -1433,7 +1712,8 @@
                 favorites: favoriteLocations,
                 settings: {
                     updateInterval: updateIntervalSelect.value,
-                    tempUnit: tempUnitSelect.value
+                    tempUnit: tempUnitSelect.value,
+                    mapStyle: mapStyleSelect.value
                 },
                 exportDate: new Date().toISOString()
             };
@@ -1475,6 +1755,10 @@
                         }
                         if (data.settings.tempUnit) {
                             tempUnitSelect.value = data.settings.tempUnit;
+                        }
+                        if (data.settings.mapStyle) {
+                            mapStyleSelect.value = data.settings.mapStyle;
+                            updateTileLayer(data.settings.mapStyle);
                         }
                         updateSettings();
                     }
